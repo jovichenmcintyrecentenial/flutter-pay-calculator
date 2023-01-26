@@ -74,6 +74,12 @@ class _MyHomePageState extends State<MyHomePage> {
         });
         return false;
       }
+      else if (double.parse(hoursWorkedTextController.text.trim()) < 0) {
+        setState(() {
+          errorMessage = 'Hours worked cannot be less than zero';
+        });
+        return false;
+      }
     }
 
     if (hourlyRateTextController.text.trim().isEmpty) {
@@ -85,6 +91,12 @@ class _MyHomePageState extends State<MyHomePage> {
       if (!_isNumeric(hourlyRateTextController.text.trim())) {
         setState(() {
           errorMessage = 'Please enter only numbers for hourly rate';
+        });
+        return false;
+      }
+      else if (double.parse(hourlyRateTextController.text.trim()) < 0) {
+        setState(() {
+          errorMessage = 'Hourly rate cannot be less than zero';
         });
         return false;
       }
