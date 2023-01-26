@@ -16,15 +16,13 @@ class MyApp extends StatelessWidget {
 
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: ''),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
-
 
   final String title;
 
@@ -33,13 +31,57 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
 
-  void _incrementCounter() {
+
+  var hoursWorkedTextController = TextEditingController();
+  var hourlyRateTextController = TextEditingController();
+
+  double regularPay = 0;
+  double overtimePay = 0;
+  double totalPay = 0;
+  double tax = 0;
+  int hours = 0;
+  double hourlyRate = 0;
+
+  String? errorMessage;
+
+  validate(){
+    if(hoursWorkedTextController.text.trim().isEmpty){
+      setState(() {
+        errorMessage = 'Please enter your hours worked';
+      });
+      return false;
+    }
+
+    if(hoursWorkedTextController.text.trim().isEmpty){
+      setState(() {
+        errorMessage = 'Please enter your hourly rate';
+      });
+      return false;
+
+    }
     setState(() {
-
-      _counter++;
+      errorMessage = null;
     });
+    return true;
+  }
+
+  void calculatePay(){
+
+    int overtimeHours = 0;
+    int regularHours = hours;
+
+    if(hours > 40){
+      overtimeHours = hours-40;
+      overtimePay = overtimeHours * hourlyRate * 1.5;
+      regularHours = 40;
+    }
+
+    regularPay = regularHours * hourlyRate;
+    totalPay = regularPay + overtimePay;
+    tax = totalPay * 0.18;
+
+    setState(() {});
   }
 
   @override
@@ -50,26 +92,66 @@ class _MyHomePageState extends State<MyHomePage> {
 
         title: Text(widget.title),
       ),
-      body: Center(
-
+      body: Padding(
+        padding: const EdgeInsets.all(30),
         child: Column(
-
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children:  <Widget>[
             const Text(
-              'You have pushed the button this many times:',
+              'Pay Calculator',
+              style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+
+            const SizedBox(height:10,),
+            if(errorMessage != null)
+              ...[
+                Text(errorMessage!,
+                  style: const TextStyle(
+                      fontSize: 17, color: Colors.red),
+                ),
+                 const SizedBox(height:5,),
+              ],
+             _CustomTextFieldWidget('Enter numbers worked',
+                controller: hoursWorkedTextController),
+            const SizedBox(height: 10,),
+             _CustomTextFieldWidget('Enter hourly rate',
+                controller: hourlyRateTextController),
+            const SizedBox(height: 30,),
+            Center(
+              child: ElevatedButton(
+              onPressed: () {
+                if(validate()){
+                  calculatePay();
+                }
+              },
+              child: const Text(
+                "Calculate",
+                style: TextStyle(color: Colors.white),
+              ),
+          ),
+            )
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+
+    );
+  }
+}
+
+class _CustomTextFieldWidget extends StatelessWidget {
+  final String hint;
+  final TextEditingController controller;
+
+  const _CustomTextFieldWidget(this.hint, {
+    super.key, required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(keyboardType: TextInputType.number,
+      controller: controller,
+      decoration: InputDecoration(
+          hintText: hint
       ),
     );
   }
