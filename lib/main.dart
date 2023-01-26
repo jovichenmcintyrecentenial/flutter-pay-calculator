@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pay_calculator/widgets/custom_text_field_widget.dart';
+import 'package:pay_calculator/widgets/footer_widget.dart';
+import 'package:pay_calculator/widgets/row_list_item.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,7 +16,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-
         primarySwatch: Colors.blue,
       ),
       home: const MyHomePage(title: ''),
@@ -31,8 +33,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
-
   var hoursWorkedTextController = TextEditingController();
   var hourlyRateTextController = TextEditingController();
 
@@ -40,25 +40,54 @@ class _MyHomePageState extends State<MyHomePage> {
   double overtimePay = 0;
   double totalPay = 0;
   double tax = 0;
-  int hours = 0;
   double hourlyRate = 0;
 
   String? errorMessage;
 
-  validate(){
-    if(hoursWorkedTextController.text.trim().isEmpty){
+  void resetValues(){
+     regularPay = 0;
+     overtimePay = 0;
+     totalPay = 0;
+     tax = 0;
+     hourlyRate = 0;
+  }
+
+  //numeric check
+  bool _isNumeric(String? s) {
+    if (s == null) {
+      return false;
+    }
+    return double.tryParse(s) != null;
+  }
+
+  //validate user inputs
+  bool validate() {
+    if (hoursWorkedTextController.text.trim().isEmpty) {
       setState(() {
         errorMessage = 'Please enter your hours worked';
       });
       return false;
+    } else {
+      if (!_isNumeric(hoursWorkedTextController.text.trim())) {
+        setState(() {
+          errorMessage = 'Please enter only numbers for hours worked';
+        });
+        return false;
+      }
     }
 
-    if(hoursWorkedTextController.text.trim().isEmpty){
+    if (hourlyRateTextController.text.trim().isEmpty) {
       setState(() {
         errorMessage = 'Please enter your hourly rate';
       });
       return false;
-
+    } else {
+      if (!_isNumeric(hourlyRateTextController.text.trim())) {
+        setState(() {
+          errorMessage = 'Please enter only numbers for hourly rate';
+        });
+        return false;
+      }
     }
     setState(() {
       errorMessage = null;
@@ -66,13 +95,15 @@ class _MyHomePageState extends State<MyHomePage> {
     return true;
   }
 
-  void calculatePay(){
+  void calculatePay() {
+    resetValues();
+    double overtimeHours = 0;
+    double hours = double.parse(hoursWorkedTextController.text.toString());
+    double hourlyRate = double.parse(hourlyRateTextController.text.toString());
+    double regularHours = hours;
 
-    int overtimeHours = 0;
-    int regularHours = hours;
-
-    if(hours > 40){
-      overtimeHours = hours-40;
+    if (hours > 40) {
+      overtimeHours = hours - 40;
       overtimePay = overtimeHours * hourlyRate * 1.5;
       regularHours = 40;
     }
@@ -86,73 +117,80 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
-
         title: Text(widget.title),
       ),
       body: Padding(
         padding: const EdgeInsets.all(30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children:  <Widget>[
+          children: <Widget>[
             const Text(
               'Pay Calculator',
               style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800),
             ),
-
-            const SizedBox(height:10,),
-            if(errorMessage != null)
-              ...[
-                Text(errorMessage!,
-                  style: const TextStyle(
-                      fontSize: 17, color: Colors.red),
-                ),
-                 const SizedBox(height:5,),
-              ],
-             _CustomTextFieldWidget('Enter numbers worked',
+            const SizedBox(
+              height: 10,
+            ),
+            if (errorMessage != null) ...[
+              Text(
+                errorMessage!,
+                style: const TextStyle(fontSize: 17, color: Colors.red),
+              ),
+              const SizedBox(
+                height: 5,
+              ),
+            ],
+            CustomTextFieldWidget('Enter number of hours worked',
                 controller: hoursWorkedTextController),
-            const SizedBox(height: 10,),
-             _CustomTextFieldWidget('Enter hourly rate',
+            const SizedBox(
+              height: 10,
+            ),
+            CustomTextFieldWidget('Enter hourly rate',
                 controller: hourlyRateTextController),
-            const SizedBox(height: 30,),
+            const SizedBox(
+              height: 30,
+            ),
             Center(
               child: ElevatedButton(
-              onPressed: () {
-                if(validate()){
-                  calculatePay();
-                }
-              },
-              child: const Text(
-                "Calculate",
-                style: TextStyle(color: Colors.white),
+                onPressed: () {
+                  if (validate()) {
+                    calculatePay();
+                  }
+                },
+                child: const Text(
+                  "Calculate",
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
-          ),
-            )
+            ),
+            regularPay != 0?buildReportDisplay():const Spacer(),
+            const FootWidget(),
+
           ],
         ),
       ),
-
     );
+  }
+
+  Expanded buildReportDisplay() {
+    return Expanded(
+            child: ListView(children: [
+              const SizedBox(height: 10,),
+
+              const Text('Report',style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),),
+              const SizedBox(height: 30,),
+
+              RowListItem(title: 'Regular Pay', data: '\$ $regularPay'),
+              RowListItem(title: 'Overtime Pay', data: '\$ $overtimePay'),
+              RowListItem(title: 'Tax Deduction', data: '-\$ $tax'),
+              RowListItem(title: 'Total Pay Before Tax ', data: '\$ $totalPay'),
+              RowListItem(title: 'Total Pay After Tax', data: '\$ ${totalPay-tax}'),
+
+            ],),
+          );
   }
 }
 
-class _CustomTextFieldWidget extends StatelessWidget {
-  final String hint;
-  final TextEditingController controller;
-
-  const _CustomTextFieldWidget(this.hint, {
-    super.key, required this.controller,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(keyboardType: TextInputType.number,
-      controller: controller,
-      decoration: InputDecoration(
-          hintText: hint
-      ),
-    );
-  }
-}
